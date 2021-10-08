@@ -49,10 +49,10 @@ class CoswaraCovidDataset:
                                     .map(lambda x, y : self.apply_padding([x,y], pad_with_repeat),
                                                     num_parallel_calls=tf.data.AUTOTUNE)
 
-        if use_mixup or use_concat:
+        if (use_mixup or use_concat) and self.split == 'train':
             positive_data = self.dataset.filter(self.filter_by_class)
-            pos_1 = positive_data.shuffle(BATCH_SIZE * 10).batch(BATCH_SIZE)
-            pos_2 = positive_data.shuffle(BATCH_SIZE * 10).batch(BATCH_SIZE)
+            pos_1 = positive_data.shuffle(BATCH_SIZE).batch(BATCH_SIZE)
+            pos_2 = positive_data.shuffle(BATCH_SIZE).batch(BATCH_SIZE)
             positive_data = tf.data.Dataset.zip((pos_1, pos_2))
             if use_mixup:
                 positive_data = positive_data.map(
@@ -72,7 +72,7 @@ class CoswaraCovidDataset:
                                     Tout=[tf.double, tf.int32])
 
         # label 0: negative, label 1: positive
-        label = 0 if label == 0 else 1
+        label_id = 0 if label == 0 else 1
 
         return audio, label
 
@@ -195,10 +195,14 @@ class CoswaraCovidDataset:
                                     Tout=tf.float32)
         
         image = tf.cast(image, tf.float32) / 255.0
+
+        if grayscale:
+            image = tf.expand_dims(image, axis=-1)
+        label = tf.one_hot(label, depth=2)
         return image, label
         
     def get_dataset(self):
-        data = self.dataset.map(lambda x, y: self.create_features([x,y], self.grayscale))#.shuffle(BATCH_SIZE * 10) 
+        data = self.dataset.map(lambda x, y: self.create_features([x,y], self.grayscale), num_parallel_calls=tf.data.AUTOTUNE)#.shuffle(BATCH_SIZE * 10) 
         if self.split == 'train':
             data = data.repeat()
         data = data.batch(BATCH_SIZE, drop_remainder=True) \
