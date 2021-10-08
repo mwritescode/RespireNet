@@ -69,7 +69,7 @@ class CoswaraCovidDataset:
         max_val = tf.reduce_max(audio)
         audio, _ = tf.numpy_function(librosa.effects.trim, 
                                     inp=[audio[int(fs):], 20, max_val, 256, 64], 
-                                    Tout=[tf.double, tf.int32])
+                                    Tout=[tf.double, tf.int64])
 
         # label 0: negative, label 1: positive
         label_id = 0 if label == 0 else 1
