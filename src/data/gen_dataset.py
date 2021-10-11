@@ -45,15 +45,15 @@ class CoswaraCovidDataset:
                                 as_supervised=True)
        
     def augment_data(self, audio):
+        audio = tf.cast(audio, tf.float32)
         p_roll = tf.random.uniform(shape=[], dtype=tf.dtypes.float32)
         p_pitch_shift = tf.random.uniform(shape=[], dtype=tf.dtypes.float32)
         if p_roll > 0.5:
             audio = tf.roll(audio, int(fs/10), axis=0)
-        if p_pitch_shift > 0.3:
-            audio = tf.numpy_function(librosa.effects.pitch_shift,
-                                        inp=[tf.cast(audio, tf.float32), fs, -2],
-                                        Tout=tf.float32)
-        
+        #if p_pitch_shift > 0.3:
+        #    audio = tf.numpy_function(librosa.effects.pitch_shift,
+        #                                inp=[tf.cast(audio, tf.float32), fs, -2],
+        #                                Tout=tf.float32)
         return audio
     
     def create_melspectrogram(self, audio, grayscale):
@@ -62,7 +62,8 @@ class CoswaraCovidDataset:
                                                 fmin=f_min, fmax=f_max, 
                                                 n_fft=nfft, hop_length=hop)
         image = librosa.power_to_db(image, ref=np.max)
-        image = np.nan_to_num((image-image.min()) / (image.max() - image.min()), posinf=0.0, neginf=0.0)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            image = np.nan_to_num((image-image.min()) / (image.max() - image.min()), posinf=0.0, neginf=0.0)
         image *= 255
         if not grayscale:
             image = cv2.applyColorMap(image, cv2.COLORMAP_JET)
@@ -78,11 +79,21 @@ class CoswaraCovidDataset:
                                 inp=[audio, lowcut, highcut, fs], 
                                 Tout=tf.double)
         
+        #audio, _ = tf.numpy_function(librosa.effects.trim, 
+        #                            inp=[audio, 20], 
+        #                            Tout=[tf.double, tf.int64])
+        
         if tf.shape(audio)[0] >= LENGHT:
             audio = audio[:LENGHT]
         else:
-            mode = 'SYMMETRIC' if self.pad_with_repeat else 'CONSTANT'
-            audio = tf.pad(audio, paddings=[[0, LENGHT - tf.shape(audio)[0]]], mode=mode)
+            diff = LENGHT - tf.shape(audio)[0]
+            if self.pad_with_repeat:
+                n_repetitions = tf.math.floordiv(LENGHT, tf.shape(audio)[0])
+                if n_repetitions > 0:
+                    audio = tf.tile(audio, [n_repetitions])
+                audio = tf.pad(audio, paddings=[[0, LENGHT - tf.shape(audio)[0]]], mode='SYMMETRIC')
+            else:
+                audio = tf.pad(audio, paddings=[[0, diff]], mode='CONSTANT')
         
         if self.split == 'train':
             audio = self.augment_data(audio)
