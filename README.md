@@ -4,5 +4,6 @@
 ![Jupyter](https://img.shields.io/badge/Jupyter-F37626.svg?&style=for-the-badge&logo=Jupyter&logoColor=white)
 ![Scikit](https://img.shields.io/badge/scikit_learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
 
-# RespireNet
+
+# RespireNet <img width="60" alt="virus icon" src="https://github.com/mwritescode/RespireNet/blob/main/assets/imgs/lungs-img.png">
 TensorFlow implementation of Microsoft's RespireNet to classify breathing/coughing sounds of people affected by COVID19 using the Coswara dataset.
