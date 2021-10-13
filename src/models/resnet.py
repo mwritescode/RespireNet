@@ -7,9 +7,7 @@ def resblock(inputs, channels, strides=1):
     x = ReLU()(x)
     x = Conv2D(channels, 3, strides=1, padding='same')(x)
     x = BatchNormalization()(x)
-    print(x.shape)
     if strides > 1:
-        print('HERE')
         inputs = Conv2D(channels, 1, strides=strides)(inputs)
         inputs = BatchNormalization()(inputs)
     x = Add()([inputs, x])
@@ -23,7 +21,6 @@ def resnet34(input_shape):
     x = ReLU()(x)
     x = MaxPooling2D(3, 2)(x)
 
-    print(x.shape)
 
     # First 3 resblocks, with 64 channels
     for _ in range(3):
