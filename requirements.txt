@@ -7,3 +7,4 @@ opencv_python==4.5.3.56
 tensorflow_gpu==2.6.0
 numpy==1.19.5
 tensorflow==2.6.0
+python-ffmpeg
